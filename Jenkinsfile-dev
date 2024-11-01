@@ -12,10 +12,10 @@ pipeline {
     }
 
     stages {
-        stage('Parameters'){
+        stage('Parameters') {
             steps {
                 script {
-                properties([
+                    properties([
                         parameters([
                             [$class: 'booleanParameter', 
                                 choiceType: 'PT_CHECKBOX', 
@@ -25,43 +25,43 @@ pipeline {
                                 name: 'RunTests',
                                 checked: true
                             ],
-
-                    ]),
+                        ]),
                     ])
                 }
             }
         }
-        
+
         stage('Clean target directory') {
             steps {
-                // Limpa o diretório target
                 echo 'Cleaning target directory'
                 sh 'mvn clean'
             }
         }
 
-        (params.RunTests) {
-            stage('Unit Tests') {
-                steps {
-                    // Executa os testes unitários
-                    echo 'Running unit tests'
-                    sh 'mvn test'
-                }
+        stage('Unit Tests') {
+            when {
+                expression { params.RunTests }
             }
-
-            stage('integration Tests') {
-                steps {
-                    // Executa os testes de mutação
-                    echo 'Integration tests'
-                    sh 'mvn verify'
-                }
+            steps {
+                echo 'Running unit tests'
+                sh 'mvn test'
             }
         }
+
+        stage('Integration Tests') {
+            when {
+                expression { params.RunTests }
+            }
+            steps {
+                echo 'Running integration tests'
+                sh 'mvn verify'
+            }
+        }
+
         stage('Package') {
             steps {
-                // Empacota o projeto sem executar os testes novamente
                 echo 'Packaging the project'
-                sh 'mvn package -DskipUnitTests=true '
+                sh 'mvn package -DskipUnitTests=true'
             }
         }
 
