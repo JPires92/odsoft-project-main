@@ -63,6 +63,7 @@ pipeline {
                         echo "Starting the application..."
                         
                         # Inicia a aplicação em segundo plano a partir da pasta de deploy
+                        disown
                         nohup javaw -jar psoft-g1-0.0.1-SNAPSHOT.jar --server.port="$SERVER_PORT" > app.log 2>&1 & 
                         
                         
