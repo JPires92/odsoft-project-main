@@ -40,7 +40,7 @@ pipeline {
             }
         }
 
-        if(params.RunTests) {
+        (params.RunTests) {
             stage('Unit Tests') {
                 steps {
                     // Executa os testes unitários
