@@ -72,7 +72,7 @@ pipeline {
 
         stage('Deploy Application') {
             steps {
-                script{
+               
                     // Mata o processo se estiver em execução, copia o novo arquivo JAR para a pasta de deploy e inicia a aplicação
                     echo 'Kill the application if it is running'
                     
@@ -122,10 +122,10 @@ pipeline {
 
                     sh '''
                         cd $DEPLOY_DIR
-                        nohup java -jar psoft-g1-0.0.1-SNAPSHOT.jar --server.port=$SERVER_PORT > app.log 2>&1&
+                        nohup javaw -jar psoft-g1-0.0.1-SNAPSHOT.jar --server.port=$SERVER_PORT > app.log 2>&1 | disown &
                     '''
 
-                    }   
+                      
             }
         }
 
