@@ -25,7 +25,7 @@ pipeline {
                 script {
                     // Checkout do código do repositório GitHub usando credenciais
                     checkout([$class: 'GitSCM', 
-                        branches: [[name: '*/${params.Branch}']], 
+                        branches: [[name: "*/${params.Branch}"]], 
                         userRemoteConfigs: [[
                             url: "${GITHUB_REPO_URL}", 
                             credentialsId: "${GITHUB_REPO_CREDENTIALS}"
