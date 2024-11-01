@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     parameters {
-        booleanParam(name: 'UnitTests', defaultValue: true, description: 'Run unit tests?'),
-        booleanParam(name: 'IntegrationTests', defaultValue: true, description: 'Run integration tests?'),
-        booleanParam(name: 'MutationTests', defaultValue: true, description: 'Run mutation tests?'),
+        booleanParam(name: 'UnitTests', defaultValue: true, description: 'Run unit tests?')
+        booleanParam(name: 'IntegrationTests', defaultValue: true, description: 'Run integration tests?')
+        booleanParam(name: 'MutationTests', defaultValue: true, description: 'Run mutation tests?')
         stringParam(name: 'Branch', defaultValue: 'main', description: 'Branch to build')
     }
 
