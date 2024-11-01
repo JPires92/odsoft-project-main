@@ -5,7 +5,7 @@ pipeline {
         // Variáveis de ambiente para o pipeline
         PROJECT_NAME = "LMS"
         GITHUB_REPO_URL = "git@github.com:JPires1992/odsoft-project.git"
-        GITHUB_REPO_CREDENTIALS = credentials('Password_Github')
+        GITHUB_REPO_CREDENTIALS = credentials('Pass_Github')
         NVD_API_KEY = credentials('NVD_API_KEY') //ID da credencial criada no Jenkins para as vulnerabilidades
         SERVER_PORT = "8081"
         DEPLOY_DIR="../deploy" // Diretório de deploy, raiz do workspace
