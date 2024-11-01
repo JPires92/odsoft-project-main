@@ -78,7 +78,7 @@ pipeline {
                         exit 1
                     fi
                 '''
-                sh './scripts/deliver.sh'
+                sh 'deliver.sh'
             }
         }
 
