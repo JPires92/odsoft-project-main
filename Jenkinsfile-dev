@@ -49,11 +49,11 @@ pipeline {
                 }
             }
 
-            stage('Mutation Tests') {
+            stage('integration Tests') {
                 steps {
                     // Executa os testes de mutação
-                    echo 'Running mutation tests'
-                    sh 'mvn org.pitest:pitest-maven:mutationCoverage'
+                    echo 'Integration tests'
+                    sh 'mvn verify'
                 }
             }
         }
