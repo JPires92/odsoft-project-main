@@ -57,23 +57,13 @@ pipeline {
                     # Verifica se o arquivo JAR existe na pasta target
                     if [ -f "target/psoft-g1-0.0.1-SNAPSHOT.jar" ]; then
                         
-                        # Se o JAR já existir na pasta de deploy, apaga-o
-                        if [ -f "$DEPLOY_DIR/psoft-g1-0.0.1-SNAPSHOT.jar" ]; then
-                            echo "Removing existing JAR in deploy directory..."
-                            rm "$DEPLOY_DIR/psoft-g1-0.0.1-SNAPSHOT.jar"
-                        fi
-                        
-                        # Copia o novo arquivo JAR para a pasta de deploy
-                        cp target/psoft-g1-0.0.1-SNAPSHOT.jar $DEPLOY_DIR/
-                        
                         # Muda para a pasta de deploy
                         cd $DEPLOY_DIR
                         
                         echo "Starting the application..."
                         
                         # Inicia a aplicação em segundo plano a partir da pasta de deploy
-                        javaw -jar psoft-g1-0.0.1-SNAPSHOT.jar --server.port="$SERVER_PORT" > app.log 2>&1
-                        disown
+                        nohup javaw -jar psoft-g1-0.0.1-SNAPSHOT.jar --server.port="$SERVER_PORT" > app.log 2>&1 &
                         
                         echo "Application started in background on port $SERVER_PORT"
                     else
