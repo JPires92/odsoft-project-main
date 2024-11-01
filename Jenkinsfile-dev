@@ -21,6 +21,53 @@ pipeline {
             }
         }
 
+        stage('Run Unit Tests') {
+            steps {
+                // Executa os testes unitários
+                echo 'Running unit tests'
+                sh 'mvn test'
+            }
+        }
+
+        stage('Run Integration Tests') {
+            steps {
+                // Executa os testes de integração
+                echo 'Running integration tests'
+                sh 'mvn verify -DskipUnitTests=true'
+            }
+        }
+
+        stage('Mutation Testing') {
+            steps {
+                echo 'Running mutation tests'
+                sh 'mvn org.pitest:pitest-maven:mutationCoverage -DskipMutationTests=false'
+            }
+        }
+
+
+        stage('Jacoco Report and Coverage') {
+            steps {
+                // Gera o relatório de cobertura de testes
+                echo 'Generating JaCoCo report and coverage percentage'
+                sh 'mvn jacoco:report'
+            }
+        }
+
+        stage('Static Code Analysis') {
+            steps {
+                // Executa o PMD
+                sh 'mvn compile pmd:pmd -DskipUnitTests=true'
+            }
+        }
+
+        stage('Check dependencies') {
+            steps {
+                // Verifica se há dependências vulneráveis
+                echo 'Checking for vulnerabilities'
+                sh 'mvn dependency-check:check -DnvdApiKey=${NVD_API_KEY}  -DskipDependencyCheck=false'
+            }
+        }
+
         stage('Package') {
             steps {
                 // Empacota o projeto sem executar os testes novamente
@@ -83,16 +130,23 @@ pipeline {
 
         stage('Post-Analysis') {
             steps {
+                
                 //Publica o relatório de cobertura de testes do JaCoCo
                 echo 'Publishing JaCoCo report'
                 jacoco execPattern: 'target/jacoco.exec', classPattern: 'target/classes', sourcePattern: 'src/main/java', inclusionPattern: '**/*.class', exclusionPattern: ''
 
+                //Arquiva relatório de testes de mutação
+                archiveArtifacts artifacts: '**/target/pit-reports/**/mutations.xml', allowEmptyArchive: true
                 // Publica o relatório de cobertura de mutação do Pitest
                 pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
 
+                //Arquiva o relatório de dependências
+                archiveArtifacts artifacts: '**/dependency-check-report.xml', allowEmptyArchive: true
                 // Publish the Dependency-Check report
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
 
+                //Arquiva o relatório de PMD
+                archiveArtifacts artifacts: '**/target/pmd.xml', allowEmptyArchive: true
                 // Publica o relatório do PMD
                 recordIssues tools: [pmdParser(pattern: '**/target/pmd.xml')]
 
