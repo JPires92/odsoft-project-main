@@ -22,6 +22,7 @@ pipeline {
         }
 
 
+
         stage('Package') {
             steps {
                 // Empacota o projeto sem executar os testes novamente
@@ -71,7 +72,8 @@ pipeline {
                         echo "Starting the application..."
                         
                         # Inicia a aplicação em segundo plano a partir da pasta de deploy
-                        start /B java -jar psoft-g1-0.0.1-SNAPSHOT.jar --server.port="$SERVER_PORT" > app.log 2>&1
+                        nohup javaw -jar psoft-g1-0.0.1-SNAPSHOT.jar --server.port="$SERVER_PORT" > app.log 2>&1 &
+                        disown
                         
                         echo "Application started in background on port $SERVER_PORT"
                     else
