@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    parameters {
+        booleanParam(name: 'RunTests', defaultValue: true, description: 'Run tests?')
+    }
+
     environment {
         // Variáveis de ambiente para o pipeline
         PROJECT_NAME = "LMS"
@@ -12,24 +16,6 @@ pipeline {
     }
 
     stages {
-        stage('Parameters') {
-            steps {
-                script {
-                    properties([
-                        parameters([
-                            [$class: 'booleanParameter', 
-                                choiceType: 'PT_CHECKBOX', 
-                                description: 'Run tests?', 
-                                filterLength: 1, 
-                                filterable: false, 
-                                name: 'RunTests',
-                                checked: true
-                            ],
-                        ]),
-                    ])
-                }
-            }
-        }
 
         stage('Clean target directory') {
             steps {
