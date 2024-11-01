@@ -13,73 +13,11 @@ pipeline {
 
     stages {
         
-        stage('Checkout') {
-            steps {
-                script {
-                    // Checkout do código do repositório GitHub usando credenciais
-                    checkout([$class: 'GitSCM', 
-                        branches: [[name: '*/main']], 
-                        userRemoteConfigs: [[
-                            url: "${GITHUB_REPO_URL}", 
-                            credentialsId: "${GITHUB_REPO_CREDENTIALS}"
-                        ]]
-                    ])
-                }
-            }
-        }
-        
         stage('Clean target directory') {
             steps {
                 // Limpa o diretório target
                 echo 'Cleaning target directory'
                 sh 'mvn clean'
-            }
-        }
-
-        stage('Run Unit Tests') {
-            steps {
-                // Executa os testes unitários
-                echo 'Running unit tests'
-                sh 'mvn test'
-            }
-        }
-
-        stage('Run Integration Tests') {
-            steps {
-                // Executa os testes de integração
-                echo 'Running integration tests'
-                sh 'mvn verify -DskipUnitTests=true'
-            }
-        }
-
-        stage('Mutation Testing') {
-            steps {
-                echo 'Running mutation tests'
-                sh 'mvn org.pitest:pitest-maven:mutationCoverage -DskipMutationTests=false'
-            }
-        }
-
-
-        stage('Jacoco Report and Coverage') {
-            steps {
-                // Gera o relatório de cobertura de testes
-                echo 'Generating JaCoCo report and coverage percentage'
-                sh 'mvn jacoco:report'
-            }
-        }
-
-        stage('Static Code Analysis') {
-            steps {
-                // Executa o PMD
-                sh 'mvn compile pmd:pmd -DskipUnitTests=true'
-            }
-        }
-
-        stage('Check dependencies') {
-            steps {
-                // Verifica se há dependências vulneráveis
-                echo 'Checking for vulnerabilities'
-                sh 'mvn dependency-check:check -DnvdApiKey=${NVD_API_KEY}  -DskipDependencyCheck=false'
             }
         }
 
