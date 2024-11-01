@@ -5,6 +5,7 @@ pipeline {
         booleanParam(name: 'UnitTests', defaultValue: true, description: 'Run unit tests?')
         booleanParam(name: 'IntegrationTests', defaultValue: true, description: 'Run integration tests?')
         booleanParam(name: 'MutationTests', defaultValue: true, description: 'Run mutation tests?')
+        booleanParam(name: 'StaticCodeAnalysis', defaultValue: true, description: 'Run static code analysis?')
         string(name: 'Branch', defaultValue: 'main', description: 'Branch to build')
     }
 
@@ -44,7 +45,7 @@ pipeline {
 
         stage('Unit Tests') {
             when {
-                expression { params.UnitTests }
+                expression { params.UnitTests && !params.MutationTests }
             }
             steps {
                 echo 'Running unit tests'
