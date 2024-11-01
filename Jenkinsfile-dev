@@ -131,7 +131,6 @@ pipeline {
 
         stage('Post-Analysis') {
             steps {
-                
                 //Publica o relatório de cobertura de testes do JaCoCo
                 echo 'Publishing JaCoCo report'
                 jacoco execPattern: 'target/jacoco.exec', classPattern: 'target/classes', sourcePattern: 'src/main/java', inclusionPattern: '**/*.class', exclusionPattern: ''
@@ -140,16 +139,24 @@ pipeline {
                 archiveArtifacts artifacts: '**/target/pit-reports/**/mutations.xml', allowEmptyArchive: true
                 // Publica o relatório de cobertura de mutação do Pitest
                 pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
+                
+                if(parameters.StaticCodeAnalysis){
+                    //Arquiva o relatório de vulnerabilidades
+                    archiveArtifacts artifacts: '**/dependency-check-report.xml', allowEmptyArchive: true
+                    // Publica o relatório de vulnerabilidades
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                
+                    //Arquiva o relatório de dependências
+                    archiveArtifacts artifacts: '**/dependency-check-report.xml', allowEmptyArchive: true
+                    // Publish the Dependency-Check report
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
 
-                //Arquiva o relatório de dependências
-                archiveArtifacts artifacts: '**/dependency-check-report.xml', allowEmptyArchive: true
-                // Publish the Dependency-Check report
-                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
 
-                //Arquiva o relatório de PMD
-                archiveArtifacts artifacts: '**/target/pmd.xml', allowEmptyArchive: true
-                // Publica o relatório do PMD
-                recordIssues tools: [pmdParser(pattern: '**/target/pmd.xml')]
+                    //Arquiva o relatório de PMD
+                    archiveArtifacts artifacts: '**/target/pmd.xml', allowEmptyArchive: true
+                    // Publica o relatório do PMD
+                    recordIssues tools: [pmdParser(pattern: '**/target/pmd.xml')]
+                }
 
                 // Limpa o workspace
                 cleanWs()
