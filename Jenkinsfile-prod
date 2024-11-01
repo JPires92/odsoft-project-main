@@ -1,0 +1,92 @@
+pipeline {
+    agent any
+
+    environment {
+        // Variáveis de ambiente para o pipeline
+        PROJECT_NAME = "LMS"
+        GITHUB_REPO_URL = "git@github.com:JPires1992/odsoft-project.git"
+        GITHUB_REPO_CREDENTIALS = credentials('Password_Github')
+        NVD_API_KEY = credentials('NVD_API_KEY') //ID da credencial criada no Jenkins
+        SERVER_PORT = "2228"
+    }
+
+    //Triggers the pipeline when a push event occurs in the GitHub repository
+    triggers{
+        githubPush()
+    }
+
+    stages {
+        
+        stage('Checkout') {
+            steps {
+                script {
+                    // Checkout do código do repositório GitHub usando credenciais
+                    checkout([$class: 'GitSCM', 
+                        branches: [[name: '*/main']], 
+                        userRemoteConfigs: [[
+                            url: "${GITHUB_REPO_URL}", 
+                            credentialsId: "${GITHUB_REPO_CREDENTIALS}"
+                        ]]
+                    ])
+                }
+            }
+        }
+        
+        stage('Clean target directory') {
+            steps {
+                // Limpa o diretório target
+                echo 'Cleaning target directory'
+                sh 'mvn clean'
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                // Executa os testes unitários
+                echo 'Running unit tests'
+                sh 'mvn test'
+            }
+        }
+
+
+        stage('Package') {
+            steps {
+                // Empacota o projeto sem executar os testes novamente
+                echo 'Packaging the project'
+                sh 'mvn package -DskipUnitTests=true '
+            }
+        }
+
+        stage('Deploy Application') {
+            steps {
+                // Realiza o deploy da aplicação
+                echo 'Deploying the application'
+                sh '''
+                    cd target
+                    if [ -f "psoft-g1-0.0.1-SNAPSHOT.jar" ]; then
+                        echo "Starting the application..."
+                        nohup java -jar psoft-g1-0.0.1-SNAPSHOT.jar --server.port="$SERVER_PORT" > log.txt 2>&1 &
+                        disown  
+                        echo "Application started in background in the port $SERVER_PORT"
+                    else
+                        echo "Error: psoft-g1-0.0.1-SNAPSHOT.jar not found!"
+                        exit 1
+                    fi
+                '''
+            }
+        }
+
+    }
+    
+    post {
+        always {
+            echo "Pipeline completed."
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
