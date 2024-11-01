@@ -108,6 +108,9 @@ pipeline {
                 // Publica o relatório do PMD
                 recordIssues tools: [pmdParser(pattern: '**/target/pmd.xml')]
 
+                // Limpa o workspace
+                cleanWs()
+
             }
         }
     }
