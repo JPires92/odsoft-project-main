@@ -40,19 +40,11 @@ pipeline {
             }
         }
         
-        stage('Clean target directory') {
+        stage('Clean target directory and compile') {
             steps {
                 // Limpa o diretório target
                 echo 'Cleaning target directory'
-                sh 'mvn clean'
-            }
-        }
-
-        stage('Build') {
-            steps {
-                // Compila o projeto
-                echo 'Building the project'
-                sh 'mvn compile'
+                sh 'mvn clean compile'
             }
         }
 
@@ -86,7 +78,7 @@ pipeline {
                     }
                     steps {
                         echo 'Running mutation tests'
-                        sh 'mvn test-compile org.pitest:pitest-maven:mutationCoverage -DskipMutationTests=false'
+                        sh 'mvn org.pitest:pitest-maven:mutationCoverage -DskipMutationTests=false'
                     }
                 }
             }
