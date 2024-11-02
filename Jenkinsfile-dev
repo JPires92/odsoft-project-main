@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+    }
+
     parameters {
         booleanParam(name: 'UnitTests', defaultValue: true, description: 'Run unit tests?')
         booleanParam(name: 'IntegrationTests', defaultValue: true, description: 'Run integration tests?')
@@ -20,7 +24,7 @@ pipeline {
     }
 
     stages {
-
+        
         stage('Checkout') {
             steps {
                 script {
@@ -35,135 +39,197 @@ pipeline {
                 }
             }
         }
-
+        
         stage('Clean target directory') {
             steps {
+                // Limpa o diretório target
                 echo 'Cleaning target directory'
                 sh 'mvn clean'
             }
         }
 
-        stage('Unit Tests') {
-            when {
-                expression { params.UnitTests && !params.MutationTests }
-            }
+        stage('Build') {
             steps {
-                echo 'Running unit tests'
-                sh 'mvn test'
+                // Compila o projeto
+                echo 'Building the project'
+                sh 'mvn compile'
             }
         }
 
-        stage('Integration Tests') {
-            when {
-                expression { params.IntegrationTests }
+        stage('Tests'){
+            parallel {
+                stage('Run Unit Tests') {
+                    when {
+                        expression { params.UnitTests }
+                    }
+                    steps {
+                        // Executa os testes unitários
+                        echo 'Running unit tests'
+                        sh 'mvn test'
+                    }
+                }
+
+                stage('Run Integration Tests') {
+                    when {
+                        expression { params.IntegrationTests }
+                    }
+                    steps {
+                        // Executa os testes de integração
+                        echo 'Running integration tests'
+                        sh 'mvn verify -DskipUnitTests=true'
+                    }
+                }
+
+                stage('Mutation Testing') {
+                    when {
+                        expression { params.MutationTests }
+                    }
+                    steps {
+                        echo 'Running mutation tests'
+                        sh 'mvn test-compile org.pitest:pitest-maven:mutationCoverage -DskipMutationTests=false'
+                    }
+                }
             }
-            steps {
-                echo 'Running integration tests'
-                sh 'mvn verify'
+
+        }
+
+        stage ('Analysis') {
+            parallel {
+                stage('Jacoco Report and Coverage') {
+                    when{
+                        expression { params.UnitTests }
+                    }
+                    steps {
+                        // Gera o relatório de cobertura de testes
+                        echo 'Generating JaCoCo report and coverage percentage'
+                        sh 'mvn jacoco:report'
+                    }
+                }
+
+                stage('Static Code Analysis') {
+                    when {
+                        expression { params.StaticCodeAnalysis }
+                    }
+                    steps {
+                        // Executa o PMD
+                        sh 'mvn compile pmd:pmd -DskipUnitTests=true'
+                    }
+                }
+
+                stage('Check dependencies') {
+                    when {
+                        expression { params.StaticCodeAnalysis }
+                    }
+                    steps {
+                        // Verifica se há dependências vulneráveis
+                        echo 'Checking for vulnerabilities'
+                        sh 'mvn dependency-check:check -DnvdApiKey=${NVD_API_KEY}  -DskipDependencyCheck=false'
+                    }
+                }
             }
         }
 
         stage('Package') {
             steps {
+                // Empacota o projeto sem executar os testes novamente
                 echo 'Packaging the project'
-                sh 'mvn package -DskipUnitTests=true'
+                sh 'mvn package -DskipUnitTests=true '
             }
         }
 
-        stage('Deploy Application') {
-            steps {
-               
-                    // Mata o processo se estiver em execução, copia o novo arquivo JAR para a pasta de deploy e inicia a aplicação
-                    echo 'Kill the application if it is running'
-                    
-                    sh '''
-                        # Obtem o PID do processo
-                        process=$(netstat -aon | grep :$SERVER_PORT | awk '{print $5}' | head -n 1)
+        stage('Deploy and Post-Analysis') {
+            parallel {
+                stage('Deploy Application') {
+                    steps {
+                        // Mata o processo se estiver em execução, copia o novo arquivo JAR para a pasta de deploy e inicia a aplicação
+                        echo 'Kill the application if it is running'
                         
-                        # Verifica se o processo foi encontrado e termina o processo
-                        if [ -n "$process" ]; then
-                            echo "Killing process with PID: $process"
-                            taskkill //PID $process //F
-                        else
-                            echo "No process found running in port $SERVER_PORT"
-                        fi
-                    '''
-
-                    echo 'Deploying the application'
-                    sh '''                    
-                        # Cria a pasta de deploy se não existir
-                        mkdir -p $DEPLOY_DIR
-                        
-                        # Verifica se o arquivo JAR existe na pasta target
-                        if [ -f "target/psoft-g1-0.0.1-SNAPSHOT.jar" ]; then
+                        sh '''
+                            # Obtem o PID do processo
+                            process=$(netstat -aon | grep :$SERVER_PORT | awk '{print $5}' | head -n 1)
                             
-                            # Se o JAR já existir na pasta de deploy, apaga-o
-                            if [ -f "$DEPLOY_DIR/psoft-g1-0.0.1-SNAPSHOT.jar" ]; then
-                                echo "Removing existing JAR in deploy directory..."
-                                rm "$DEPLOY_DIR/psoft-g1-0.0.1-SNAPSHOT.jar"
+                            # Verifica se o processo foi encontrado e termina o processo
+                            if [ -n "$process" ]; then
+                                echo "Killing process with PID: $process"
+                                taskkill //PID $process //F
+                            else
+                                echo "No process found running in port $SERVER_PORT"
                             fi
+                        '''
+
+                        echo 'Deploying the application'
+                        sh '''                    
+                            # Cria a pasta de deploy se não existir
+                            mkdir -p $DEPLOY_DIR
                             
-                            # Copia o novo arquivo JAR para a pasta de deploy
-                            cp target/psoft-g1-0.0.1-SNAPSHOT.jar $DEPLOY_DIR/
-                            
-                            # Muda para a pasta de deploy
-                            cd $DEPLOY_DIR
-                            
-                            echo "Starting the application..."
-                            
-                            # Inicia a aplicação em segundo plano a partir da pasta de deploy
-                            
-                            echo "Application started in background on port $SERVER_PORT"
-                        else
-                            echo "Error: psoft-g1-0.0.1-SNAPSHOT.jar not found in target!"
-                            exit 1
-                        fi
-                    '''
-
-                    sh '''
-                        cd $DEPLOY_DIR
-                        nohup javaw -jar psoft-g1-0.0.1-SNAPSHOT.jar --server.port=$SERVER_PORT > app.log 2>&1 | disown &
-                    '''
-
-                      
-            }
-        }
-
-        stage('Post-Analysis') {
-            steps {
-                script{
-                    //Publica o relatório de cobertura de testes do JaCoCo
-                    echo 'Publishing JaCoCo report'
-                    jacoco execPattern: 'target/jacoco.exec', classPattern: 'target/classes', sourcePattern: 'src/main/java', inclusionPattern: '**/*.class', exclusionPattern: ''
-
-                    //Arquiva relatório de testes de mutação
-                    archiveArtifacts artifacts: '**/target/pit-reports/**/mutations.xml', allowEmptyArchive: true
-                    // Publica o relatório de cobertura de mutação do Pitest
-                    pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
-
-                    if (parameters.StaticCodeAnalysis){
-                        //Arquiva o relatório de vulnerabilidades
-                        archiveArtifacts artifacts: '**/dependency-check-report.xml', allowEmptyArchive: true
-                        // Publica o relatório de vulnerabilidades
-                        dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-                    
-                        //Arquiva o relatório de dependências
-                        archiveArtifacts artifacts: '**/dependency-check-report.xml', allowEmptyArchive: true
-                        // Publish the Dependency-Check report
-                        dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-
-
-                        //Arquiva o relatório de PMD
-                        archiveArtifacts artifacts: '**/target/pmd.xml', allowEmptyArchive: true
-                        // Publica o relatório do PMD
-                        recordIssues tools: [pmdParser(pattern: '**/target/pmd.xml')]
+                            # Verifica se o arquivo JAR existe na pasta target
+                            if [ -f "target/psoft-g1-0.0.1-SNAPSHOT.jar" ]; then
+                                
+                                # Se o JAR já existir na pasta de deploy, apaga-o
+                                if [ -f "$DEPLOY_DIR/psoft-g1-0.0.1-SNAPSHOT.jar" ]; then
+                                    echo "Removing existing JAR in deploy directory..."
+                                    rm "$DEPLOY_DIR/psoft-g1-0.0.1-SNAPSHOT.jar"
+                                fi
+                                
+                                # Copia o novo arquivo JAR para a pasta de deploy
+                                cp target/psoft-g1-0.0.1-SNAPSHOT.jar $DEPLOY_DIR/
+                                
+                                # Muda para a pasta de deploy
+                                cd $DEPLOY_DIR
+                                
+                                echo "Starting the application..."
+                                
+                                # Inicia a aplicação em segundo plano a partir da pasta de deploy
+                                nohup java -jar psoft-g1-0.0.1-SNAPSHOT.jar --server.port="$SERVER_PORT" > app.log 2>&1&
+                                disown
+                                
+                                echo "Application started in background on port $SERVER_PORT"
+                            else
+                                echo "Error: psoft-g1-0.0.1-SNAPSHOT.jar not found in target!"
+                                exit 1
+                            fi
+                        '''
                     }
+                }
 
-                    // Limpa o workspace
-                    cleanWs()
+                stage('Post-Analysis') {
+                    steps {
+                        script{
+                            if( params.UnitTests ){
+                                //Publica resultados dos testes unitários
+                                junit '**/target/surefire-reports/*.xml'
+                                //Publica o relatório de cobertura de testes do JaCoCo
+                                echo 'Publishing JaCoCo report'
+                                jacoco execPattern: 'target/jacoco.exec', classPattern: 'target/classes', sourcePattern: 'src/main/java', inclusionPattern: '**/*.class', exclusionPattern: ''
+                            }
 
-                }    
+                            if( params.IntegrationTests ){
+                                //Publica resultados dos testes de integração
+                                junit '**/target/failsafe-reports/*.xml'
+                            }
+                            
+                            if( params.MutationTests){
+                                //Arquiva relatório de testes de mutação
+                                archiveArtifacts artifacts: '**/target/pit-reports/**/mutations.xml', allowEmptyArchive: true
+                                // Publica o relatório de cobertura de mutação do Pitest
+                                pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
+                            }
+                            
+                            if( params.StaticCodeAnalysis){
+                                //Arquiva o relatório de dependências
+                                archiveArtifacts artifacts: '**/dependency-check-report.xml', allowEmptyArchive: true
+                                // Publish the Dependency-Check report
+                                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
 
+                                //Arquiva o relatório de PMD
+                                archiveArtifacts artifacts: '**/target/pmd.xml', allowEmptyArchive: true
+                                // Publica o relatório do PMD
+                                recordIssues tools: [pmdParser(pattern: '**/target/pmd.xml')]
+                            }
+                        }
+                        
+                    }
+                }
             }
         }
     }
