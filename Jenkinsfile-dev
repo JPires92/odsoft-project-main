@@ -126,7 +126,7 @@ pipeline {
                             }
                             else{
                                 // Executa o script de deploy no servidor Windows
-                                bat 'deploy_windows.sh %SERVER_PORT% %DEPLOY_DIR%'
+                                bat 'deploy_windows.bat %SERVER_PORT% %DEPLOY_DIR%'
                             }
     
                         }
