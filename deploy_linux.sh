@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SERVER_PORT=$1
+DEPLOY_DIR=$2
+
 echo "Kill the application if it is running"
 
 # Obtém o PID do processo na porta especificada
