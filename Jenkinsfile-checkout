@@ -139,7 +139,7 @@ pipeline {
                         
                         sh '''
                             # Obtem o PID do processo
-                            process=$(lsof -t -i :$SERVER_PORT)
+                            process=$(netstat -tulnp | grep :$SERVER_PORT | awk '{print $7}' | cut -d'/' -f1)
                             
                             # Verifica se o processo foi encontrado e termina o processo
                             if [ -n "$process" ]; then
