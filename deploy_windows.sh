@@ -1,4 +1,4 @@
-#!/bin/bash
+#!
 @echo off
 
 set SERVER_PORT=%1
