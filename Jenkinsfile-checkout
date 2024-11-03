@@ -166,6 +166,7 @@ pipeline {
                                 
                                 # Copia o novo arquivo JAR para a pasta de deploy
                                 cp target/psoft-g1-0.0.1-SNAPSHOT.jar $DEPLOY_DIR/
+                                chmod -R 888 $DEPLOY_DIR
                                 
                                 # Muda para a pasta de deploy
                                 cd $DEPLOY_DIR
