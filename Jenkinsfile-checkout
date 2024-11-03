@@ -139,12 +139,12 @@ pipeline {
                         
                         sh '''
                             # Obtem o PID do processo
-                            process=$(netstat -aon | grep :$SERVER_PORT | awk '{print $5}' | head -n 1)
+                            process=$(lsof -t -i :$SERVER_PORT)
                             
                             # Verifica se o processo foi encontrado e termina o processo
                             if [ -n "$process" ]; then
                                 echo "Killing process with PID: $process"
-                                taskkill //PID $process //F
+                                kill -9 $process
                             else
                                 echo "No process found running in port $SERVER_PORT"
                             fi
