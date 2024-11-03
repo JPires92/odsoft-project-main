@@ -20,7 +20,7 @@ pipeline {
         GITHUB_REPO_CREDENTIALS = credentials('Password_Github2')
         NVD_API_KEY = credentials('NVD_API_KEY') //ID da credencial criada no Jenkins para as vulnerabilidades
         SERVER_PORT = "8082"
-        DEPLOY_DIR="../deploy" // Diretório de deploy, raiz do workspace
+        DEPLOY_DIR="/home/jpppires/deploy" // Diretório de deploy, raiz do workspace
         MAVEN_HOME = "/opt/apache-maven-3.9.9"
     }
 
