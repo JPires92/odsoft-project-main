@@ -1,9 +1,9 @@
 pipeline {
     agent any
 
-  //  options {
-    //    skipDefaultCheckout(true)
-   // }
+    options {
+        skipDefaultCheckout(true)
+    }
 
     parameters {
         booleanParam(name: 'UnitTests', defaultValue: true, description: 'Run unit tests?')
@@ -16,14 +16,29 @@ pipeline {
     environment {
         // Variáveis de ambiente para o pipeline
         PROJECT_NAME = "LMS"
-        GITHUB_REPO_URL = "git@github.com:JPires1992/odsoft-project.git"
-        GITHUB_REPO_CREDENTIALS = credentials('Password_Github')
+        GITHUB_REPO_URL = "https://github.com/JPires92/odsoft-project-main.git"
+        GITHUB_REPO_CREDENTIALS = credentials('Password_Github2')
         NVD_API_KEY = credentials('NVD_API_KEY') //ID da credencial criada no Jenkins para as vulnerabilidades
         SERVER_PORT = "8081"
         DEPLOY_DIR="../deploy" // Diretório de deploy, raiz do workspace
     }
 
     stages {
+        
+        stage('Checkout') {
+            steps {
+                script {
+                    // Checkout do código do repositório GitHub usando credenciais
+                    checkout([$class: 'GitSCM', 
+                        branches: [[name: "*/${params.Branch}"]], 
+                        userRemoteConfigs: [[
+                            url: "${GITHUB_REPO_URL}", 
+                            credentialsId: "${GITHUB_REPO_CREDENTIALS}"
+                        ]]
+                    ])
+                }
+            }
+        }
         
         stage('Clean target directory') {
             steps {
