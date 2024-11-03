@@ -40,11 +40,11 @@ pipeline {
             }
         }
         
-        stage('Clean target directory and compile') {
+        stage('Clean target directory') {
             steps {
                 // Limpa o diretório target
                 echo 'Cleaning target directory'
-                sh 'mvn clean test-compile'
+                sh 'mvn clean'
             }
         }
 
