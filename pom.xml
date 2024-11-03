@@ -25,6 +25,7 @@
 		<skipUnitTests>false</skipUnitTests> <!--not skip unit tests by default -->
 		<skipDependencyCheck>true</skipDependencyCheck> <!--skip dependency check by default -->
 		<skipMutationTests>true</skipMutationTests> <!--skip mutation tests by default -->
+		<skipCopyResources>true</skipCopyResources> <!--skip copy resources by default-->
 	</properties>
 
 	<dependencies>
@@ -132,7 +133,8 @@
 				<artifactId>maven-resources-plugin</artifactId>
 				<version>3.3.1</version>
 				<configuration>
-					<parallel>false</parallel>
+					<skip>${skipCopyResources}</skip>
+					<!-- <parallel>false</parallel> -->
 				</configuration>
         	</plugin>
 
@@ -141,6 +143,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
 					<release>17</release>
+					<skip>${skipCopyResources}</skip>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>

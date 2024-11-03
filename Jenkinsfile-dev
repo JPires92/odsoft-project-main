@@ -44,7 +44,7 @@ pipeline {
             steps {
                 // Limpa o diretório target
                 echo 'Cleaning target directory'
-                sh 'mvn clean compile'
+                sh 'mvn clean test-compile -DskipCopyResources=false'
             }
         }
 
@@ -78,7 +78,7 @@ pipeline {
                     }
                     steps {
                         echo 'Running mutation tests'
-                        sh 'mvn test-compile org.pitest:pitest-maven:mutationCoverage -DskipMutationTests=false'
+                        sh 'mvn org.pitest:pitest-maven:mutationCoverage -DskipMutationTests=false'
                     }
                 }
             }
@@ -125,7 +125,7 @@ pipeline {
             steps {
                 // Empacota o projeto sem executar os testes novamente
                 echo 'Packaging the project'
-                sh 'mvn package -DskipUnitTests=true '
+                sh 'mvn package -DskipUnitTests=true -DskipCopyResources=false'
             }
         }
 
