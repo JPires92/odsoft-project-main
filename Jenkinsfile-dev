@@ -44,7 +44,7 @@ pipeline {
             steps {
                 // Limpa o diretório target
                 echo 'Cleaning target directory'
-                sh 'mvn clean'
+                sh 'mvn clean test-compile'
             }
         }
 
