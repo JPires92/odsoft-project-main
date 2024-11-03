@@ -21,7 +21,7 @@ pipeline {
         NVD_API_KEY = credentials('NVD_API_KEY') //ID da credencial criada no Jenkins para as vulnerabilidades
         SERVER_PORT = "8081"
         DEPLOY_DIR="../deploy" // Diretório de deploy, raiz do workspace
-        MAVEN_HOME = "/opt/apache-maven-3.9.9/bin/mvn"
+        MAVEN_HOME = "/opt/apache-maven-3.9.9"
     }
 
     stages {
@@ -45,7 +45,7 @@ pipeline {
             steps {
                 // Limpa o diretório target
                 echo 'Cleaning target directory'
-                sh '${MAVEN_HOME} clean test-compile'
+                sh "${MAVEN_HOME}/bin/mvn clean test-compile"
             }
         }
 
@@ -58,7 +58,7 @@ pipeline {
                     steps {
                         // Executa os testes unitários
                         echo 'Running unit tests'
-                        sh 'mvn test'
+                        sh "${MAVEN_HOME}/bin/mvn test"
                     }
                 }
 
@@ -69,7 +69,7 @@ pipeline {
                     steps {
                         // Executa os testes de integração
                         echo 'Running integration tests'
-                        sh 'mvn verify -DskipUnitTests=true'
+                       sh "${MAVEN_HOME}/bin/mvn verify -DskipUnitTests=true"
                     }
                 }
 
@@ -79,7 +79,7 @@ pipeline {
                     }
                     steps {
                         echo 'Running mutation tests'
-                        sh 'mvn test-compile org.pitest:pitest-maven:mutationCoverage -DskipMutationTests=false'
+                        sh "${MAVEN_HOME}/bin/mvn test-compile org.pitest:pitest-maven:mutationCoverage -DskipMutationTests=false"
                     }
                 }
             }
@@ -95,7 +95,7 @@ pipeline {
                     steps {
                         // Gera o relatório de cobertura de testes
                         echo 'Generating JaCoCo report and coverage percentage'
-                        sh 'mvn jacoco:report'
+                        sh "${MAVEN_HOME}/bin/mvnmvn jacoco:report"
                     }
                 }
 
@@ -105,7 +105,7 @@ pipeline {
                     }
                     steps {
                         // Executa o PMD
-                        sh 'mvn compile pmd:pmd -DskipUnitTests=true'
+                        sh "${MAVEN_HOME}/bin/mvn compile pmd:pmd -DskipUnitTests=true"
                     }
                 }
 
@@ -116,7 +116,7 @@ pipeline {
                     steps {
                         // Verifica se há dependências vulneráveis
                         echo 'Checking for vulnerabilities'
-                        sh 'mvn dependency-check:check -DnvdApiKey=${NVD_API_KEY}  -DskipDependencyCheck=false'
+                        sh "${MAVEN_HOME}/bin/mvn dependency-check:check -DnvdApiKey=${NVD_API_KEY}  -DskipDependencyCheck=false"
                     }
                 }
             }
@@ -126,7 +126,7 @@ pipeline {
             steps {
                 // Empacota o projeto sem executar os testes novamente
                 echo 'Packaging the project'
-                sh 'mvn package -DskipUnitTests=true'
+                sh "${MAVEN_HOME}/bin/mvn package -DskipUnitTests=true"
             }
         }
 
